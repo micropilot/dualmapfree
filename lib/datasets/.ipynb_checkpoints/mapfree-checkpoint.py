@@ -5,9 +5,9 @@ import torch
 import torch.utils.data as data
 import numpy as np
 from transforms3d.quaternions import qinverse, qmult, rotate_vector, quat2mat
-from lib.datasets.utils import read_color_image, read_depth_image, correct_intrinsic_scale,read_feature_map_image
+from lib.datasets.utils import read_color_image, read_depth_image, correct_intrinsic_scale
 
-class RapidLoadScene(data.Dataset):
+class MapFreeScene(data.Dataset):
     def __init__(
             self, scene_root, resize, sample_factor=1, overlap_limits=None, transforms=None,
             test_scene=False):
@@ -108,15 +108,13 @@ class RapidLoadScene(data.Dataset):
     def __getitem__(self, index):
         # image paths (relative to scene_root)
         im1_path, im2_path = self.get_pair_path(self.pairs[index])
-        # print(im1_path)
-        modified_scene_root = Path(str(self.scene_root).replace('data', 'feat_im'))
-        feat_im1_path = str(modified_scene_root) +"/" + str(Path(im1_path).parent.name) + "/"+ str(Path(im1_path).parent.parent.name) + '/' + str(Path(im1_path).stem) + "_feature.png"
-        
-        feat_im2_path = str(modified_scene_root) +"/" + str(Path(im2_path).parent.name) + "/"+ str(Path(im2_path).parent.parent.name) + '/' + str(Path(im2_path).stem) + "_feature.png"
-        
+
         # load color images
-        image1 = read_feature_map_image(feat_im1_path,self.resize, augment_fn=self.transforms)
-        image2 = read_feature_map_image(feat_im2_path,self.resize, augment_fn=self.transforms)
+        image1 = read_color_image(self.scene_root / im1_path,
+                                  self.resize, augment_fn=self.transforms)
+        image2 = read_color_image(self.scene_root / im2_path,
+                                  self.resize, augment_fn=self.transforms)
+
         # get absolute pose of im0 and im1
         if self.test_scene:
             t1, t2, c1, c2 = np.zeros([3]), np.zeros([3]), np.zeros([3]), np.zeros([3])
@@ -162,7 +160,7 @@ class RapidLoadScene(data.Dataset):
         return data
 
 
-class RapidLoadDataset(data.ConcatDataset):
+class MapFreeDataset(data.ConcatDataset):
     def __init__(self, cfg, mode, transforms=None):
         assert mode in ['train', 'val', 'test'], 'Invalid dataset mode'
 
@@ -190,7 +188,7 @@ class RapidLoadDataset(data.ConcatDataset):
 
         # Init dataset objects for each scene
         data_srcs = [
-            RapidLoadScene(
+            MapFreeScene(
                 data_root / scene, resize, sample_factor, overlap_limits, transforms,
                 test_scene) for scene in scenes]
         super().__init__(data_srcs)

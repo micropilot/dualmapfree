@@ -1,6 +1,6 @@
 
 MODEL: 'MicKey'
-DEBUG: False
+DEBUG: True
 MICKEY:
   DINOV2:
     DOWN_FACTOR: 14
