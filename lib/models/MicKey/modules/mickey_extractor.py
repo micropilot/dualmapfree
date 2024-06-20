@@ -52,7 +52,7 @@ class MicKey_Extractor(nn.Module):
         #             reshape(B, self.dino_channels, H // self.dino_downfactor, W // self.dino_downfactor).float()
         # elif self.cfg.DATASET.DATA_SOURCE == 'RapidLoad':
     
-        dinov2_features = x.view(12, 1024, 37, 37)
+        dinov2_features = x.view(32, 1024, 37, 37)
         scrs = self.det_head(dinov2_features)
         kpts = self.det_offset(dinov2_features)
         depths = self.depth_head(dinov2_features)
