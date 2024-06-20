@@ -110,9 +110,9 @@ class RapidLoadScene(data.Dataset):
         im1_path, im2_path = self.get_pair_path(self.pairs[index])
 
         # load color images
-        feat1 = read_feature_map_image(self.scene_root.replace('data', 'feat_im') / im1_path,
+        image1 = read_feature_map_image(self.scene_root.replace('data', 'feat_im') / im1_path,
                                   self.resize, augment_fn=self.transforms)
-        feat2 = read_feature_map_image(self.scene_root.replace('data', 'feat_im')/ im2_path,
+        image2 = read_feature_map_image(self.scene_root.replace('data', 'feat_im')/ im2_path,
                                   self.resize, augment_fn=self.transforms)
         
         # get absolute pose of im0 and im1
@@ -139,8 +139,8 @@ class RapidLoadScene(data.Dataset):
         T = torch.from_numpy(T)
 
         data = {
-            'feat1': feat1,  # (3, h, w)
-            'feat2': feat2,
+            'image0': image1,  # (3, h, w)
+            'image1': image2,
             'T_0to1': T,  # (4, 4)  # relative pose
             'abs_q_0': q1,
             'abs_c_0': c1,

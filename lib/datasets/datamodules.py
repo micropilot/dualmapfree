@@ -7,6 +7,7 @@ import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 from lib.datasets.sampler import RandomConcatSampler
 from lib.datasets.mapfree import MapFreeDataset
+from lib.datasets.rapidload import RapidLoadDataset
 
 
 class DataModule(pl.LightningDataModule):
@@ -15,7 +16,7 @@ class DataModule(pl.LightningDataModule):
         self.cfg = cfg
         self.drop_last_val = drop_last_val
 
-        datasets = {'MapFree': MapFreeDataset}
+        datasets = {'MapFree': MapFreeDataset, 'RapidLoad': RapidLoadDataset}
 
         assert cfg.DATASET.DATA_SOURCE in datasets.keys(), 'invalid DATA_SOURCE, this dataset is not implemented'
         self.dataset_type = datasets[cfg.DATASET.DATA_SOURCE]
@@ -73,7 +74,7 @@ class DataModuleTraining(pl.LightningDataModule):
         self.cfg = cfg
         self.seed = cfg.DATASET.SEED
 
-        datasets = {'MapFree': MapFreeDataset}
+        datasets = {'MapFree': MapFreeDataset, 'RapidLoad': RapidLoadDataset}
 
         assert cfg.DATASET.DATA_SOURCE in datasets.keys(), 'invalid DATA_SOURCE, this dataset is not implemented'
         self.dataset_type = datasets[cfg.DATASET.DATA_SOURCE]
