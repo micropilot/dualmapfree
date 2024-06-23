@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from math import sqrt
 from lib.models.MicKey.modules.DINO_modules.dinov2 import vit_large
 from lib.models.MicKey.modules.att_layers.transformer import Transformer_self_att
 from lib.models.MicKey.modules.utils.extractor_utils import desc_l2norm, BasicBlock
@@ -12,8 +13,8 @@ class MicKey_Extractor(nn.Module):
 
         if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
             # Define DINOv2 extractor
-            self.dino_channels = cfg['DINOV2']['CHANNEL_DIM']
-            self.dino_downfactor = cfg['DINOV2']['DOWN_FACTOR']
+            self.dino_channels = cfg['MICKEY']['DINOV2']['CHANNEL_DIM']
+            self.dino_downfactor = cfg['MICKEY']['DINOV2']['DOWN_FACTOR']
             if dinov2_weights is None:
                 dinov2_weights = torch.hub.load_state_dict_from_url("https://dl.fbaipublicfiles.com/dinov2/"
                                                                     "dinov2_vitl14/dinov2_vitl14_pretrain.pth",
@@ -31,17 +32,17 @@ class MicKey_Extractor(nn.Module):
             self.dinov2_vitl14.eval()
 
             # Define whether DINOv2 runs on float16 or float32
-            if cfg['DINOV2']['FLOAT16']:
+            if cfg['MICKEY']['DINOV2']['FLOAT16']:
                 self.amp_dtype = torch.float16
                 self.dinov2_vitl14.to(self.amp_dtype)
             else:
                 self.amp_dtype = torch.float32
 
         # Define MicKey's heads
-        self.depth_head = DeepResBlock_depth(cfg)
-        self.det_offset = DeepResBlock_offset(cfg)
-        self.dsc_head = DeepResBlock_desc(cfg)
-        self.det_head = DeepResBlock_det(cfg)
+        self.depth_head = DeepResBlock_depth(cfg['MICKEY'])
+        self.det_offset = DeepResBlock_offset(cfg['MICKEY'])
+        self.dsc_head = DeepResBlock_desc(cfg['MICKEY'])
+        self.det_head = DeepResBlock_det(cfg['MICKEY'])
 
     def forward(self, x):
 
@@ -54,7 +55,8 @@ class MicKey_Extractor(nn.Module):
                 dinov2_features = dinov2_features['x_norm_patchtokens'].permute(0, 2, 1).\
                     reshape(B, self.dino_channels, H // self.dino_downfactor, W // self.dino_downfactor).float()
         elif self.cfg.DATASET.DATA_SOURCE == 'RapidLoad':
-            dinov2_features = x
+            dinov2_features = x.view(x.shape[0], x.shape[1], int(sqrt(x.shape[2]))
+                                     ,int(sqrt(x.shape[2])))
             
         scrs = self.det_head(dinov2_features)
         kpts = self.det_offset(dinov2_features)

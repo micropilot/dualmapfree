@@ -5,7 +5,7 @@ import torch
 import torch.utils.data as data
 import numpy as np
 from transforms3d.quaternions import qinverse, qmult, rotate_vector, quat2mat
-from lib.datasets.utils import read_color_image, read_depth_image, correct_intrinsic_scale
+from lib.datasets.utils import read_color_image, read_depth_image, correct_intrinsic_scale,read_feature_map_image
 
 class RapidLoadScene(data.Dataset):
     def __init__(
@@ -100,20 +100,22 @@ class RapidLoadScene(data.Dataset):
 
     def get_pair_path(self, pair):
         seqA, imgA, seqB, imgB = pair
-        return (f'seq{seqA}/frame_{imgA:05}.png', f'seq{seqB}/frame_{imgB:05}.png')
-
+        return (f'seq{seqA}/frame_{imgA:05}.jpg', f'seq{seqB}/frame_{imgB:05}.jpg')
+        
     def __len__(self):
         return len(self.pairs)
 
     def __getitem__(self, index):
         # image paths (relative to scene_root)
         im1_path, im2_path = self.get_pair_path(self.pairs[index])
+        modified_scene_root = Path(str(self.scene_root).replace('data', 'feat_im'))
+        feat_im1_path = str(modified_scene_root) +"/" + str(Path(im1_path).parent.name) + "/"+ str(Path(im1_path).parent.parent.name) + '/' + str(Path(im1_path).stem) + "_feature.png"
+        
+        feat_im2_path = str(modified_scene_root) +"/" + str(Path(im2_path).parent.name) + "/"+ str(Path(im2_path).parent.parent.name) + '/' + str(Path(im2_path).stem) + "_feature.png"
 
         # load color images
-        image1 = read_feature_map_image(self.scene_root.replace('data', 'feat_im') / im1_path,
-                                  self.resize, augment_fn=self.transforms)
-        image2 = read_feature_map_image(self.scene_root.replace('data', 'feat_im')/ im2_path,
-                                  self.resize, augment_fn=self.transforms)
+        image1 = read_feature_map_image(feat_im1_path,self.resize, augment_fn=self.transforms)
+        image2 = read_feature_map_image(feat_im2_path,self.resize, augment_fn=self.transforms)
         
         # get absolute pose of im0 and im1
         if self.test_scene:

@@ -1,0 +1,22 @@
+weights/
+.env
+__pycache__/
+*.pyc
+**/__pycache__
+**/**/__pycache__
+**/**/**/**_pycache__
+.ipynb_checkpoints/
+**/.ipynb_checkpoints
+**/**/.ipynb_checkpoints
+**/**/**/.ipynb_checkpoints
+tests/data/
+*.pt
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+
+  5 changes: 2 additions & 3 deletions5  
+config/MicKey/curriculum_learning.yaml

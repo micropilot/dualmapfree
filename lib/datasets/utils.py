@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import torch
 from numpy.linalg import inv
+from PIL import Image
 
 def imread(path, augment_fn=None):
     cv_type = cv2.IMREAD_COLOR
@@ -122,5 +123,35 @@ def define_sampling_grid(im_size, feats_downsample=4, step=1):
     indexes_mat = indexes_mat.reshape((grid_size*grid_size, 2))
 
     return indexes_mat
+
+def reverse_normalize_and_scale(tensor, min_max_values):
+    original_shape = tensor.shape
+    flattened_tensor = tensor.view(tensor.size(0), -1).clone()
+    for channel_idx in range(flattened_tensor.shape[0]):
+        min_val, max_val = min_max_values[channel_idx]
+        flattened_tensor[channel_idx] = ((flattened_tensor[channel_idx].float() / 65535) * (max_val - min_val)) + min_val
+    restored_tensor = flattened_tensor.view(original_shape)
+    return restored_tensor
+
+def read_feature_map_image(image_path, resize=(640, 480), augment_fn=None):
+    try:
+        loaded_image_pil = Image.open(image_path)
+        loaded_image_np = np.array(loaded_image_pil).astype(np.float32)
+        loaded_image_tensor = torch.tensor(loaded_image_np, dtype=torch.float32)
+        min_max_values = []
+        with open(image_path.replace("_feature.png","_metadata.txt"), 'r') as f_index:
+            for line in f_index:
+                line = line.strip()
+                if line:
+                    parts = line.split(', ')
+                    min_val = float(parts[0].split(': ')[1])
+                    max_val = float(parts[1].split(': ')[1])
+                    min_max_values.append((min_val, max_val))
+        output = reverse_normalize_and_scale(loaded_image_tensor, min_max_values)
+        return output
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        print(image_path)
+        return torch.zeros([1024, 1369], dtype=torch.float32)
 
 

@@ -56,7 +56,8 @@ class MicKeyTrainingModel(pl.LightningModule):
         avg_loss, outputs, probs_grad, num_its = self.loss_fn(batch)
 
         training_step_ok = self.backward_step(batch, outputs, probs_grad, avg_loss, num_its)
-        self.tensorboard_log_step(batch, avg_loss, outputs, probs_grad, training_step_ok)
+        if self.cfg.DATASET.DATA_SOURCE == "MapFree":
+            self.tensorboard_log_step(batch, avg_loss, outputs, probs_grad, training_step_ok)
 
     def on_train_epoch_end(self):
         if self.curriculum_learning:
