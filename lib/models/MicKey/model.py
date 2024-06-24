@@ -8,6 +8,8 @@ from lib.models.MicKey.modules.utils.probabilisticProcrustes import e2eProbabili
 
 from lib.utils.metrics import pose_error_torch, vcre_torch
 from lib.benchmarks.utils import precision_recall
+from PIL import Image
+import numpy as np
 
 class MicKeyTrainingModel(pl.LightningModule):
     def __init__(self, cfg):
@@ -44,6 +46,7 @@ class MicKeyTrainingModel(pl.LightningModule):
         self.multi_gpu = True
         self.validation_step_outputs = []
         # torch.autograd.set_detect_anomaly(True)
+        self.is_train = True
 
     def forward(self, data):
         self.compute_matches(data)
@@ -52,9 +55,12 @@ class MicKeyTrainingModel(pl.LightningModule):
 
         self(batch)
         self.prepare_batch_for_loss(batch, batch_idx)
+        # print(batch['gt_depth1_path'])
+        gt_depth1 = self.ground_depth(batch['gt_depth1_path'])
+        gt_depth2 = self.ground_depth(batch['gt_depth2_path'])
 
-        avg_loss, outputs, probs_grad, num_its = self.loss_fn(batch)
-
+        avg_loss, outputs, probs_grad, num_its = self.loss_fn(batch,self.is_train,gt_depth1,gt_depth2)
+        
         training_step_ok = self.backward_step(batch, outputs, probs_grad, avg_loss, num_its)
         if self.cfg.DATASET.DATA_SOURCE == "MapFree":
             self.tensorboard_log_step(batch, avg_loss, outputs, probs_grad, training_step_ok)
@@ -71,7 +77,7 @@ class MicKeyTrainingModel(pl.LightningModule):
         self.prepare_batch_for_loss(batch, batch_idx)
 
         # validation metrics
-        avg_loss, outputs, probs_grad, num_its = self.loss_fn(batch)
+        avg_loss, outputs, probs_grad, num_its = self.loss_fn(batch,self.is_train)
         outputs['loss'] = avg_loss
 
         # Metric pose evaluation
@@ -306,6 +312,35 @@ class MicKeyTrainingModel(pl.LightningModule):
                 checkpoint['state_dict']['compute_matches.'+param_tensor] = \
                     self.compute_matches.state_dict()[param_tensor]
 
+
+    def ground_depth(self, paths, patch_size=14):
+        batch_outputs = []
+        for path in paths:
+            im = Image.open(path)
+            im_gray = im.convert('L')
+            
+            if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
+                resize_dim = im_gray.size  
+            else:
+                resize_dim = (518, 518)  
+    
+            im_resized = im_gray.resize(resize_dim)
+            im_array = np.array(im_resized)
+    
+            patches = []
+            for i in range(0, im_array.shape[0], patch_size):
+                for j in range(0, im_array.shape[1], patch_size):
+                    patch = im_array[i:i+patch_size, j:j+patch_size]
+                    if patch.shape == (patch_size, patch_size):  
+                        patches.append(patch)
+    
+            patches_array = np.array(patches)
+            patch_means = patches_array.mean(axis=(1, 2))
+            patch_means_reshaped = patch_means.reshape(resize_dim[0] // patch_size, 
+                                                       resize_dim[1] // patch_size)
+            batch_outputs.append(patch_means_reshaped)
+        return np.stack(batch_outputs)
+        
     def is_eval_model(self, is_eval):
         if is_eval:
             self.compute_matches.extractor.depth_head.eval()

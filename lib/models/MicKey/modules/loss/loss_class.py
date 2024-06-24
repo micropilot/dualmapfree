@@ -73,13 +73,31 @@ class MetricPoseLoss(nn.Module):
 
         return Rgt, tgt, K0, K1
 
-    def forward(self, batch):
+    def forward(self,batch,is_train,gt_depth1=None,gt_depth2=None):
 
         # Detach output of the network and accumulate gradients (later use for the direct signal, ie, 3D coordinates)
         matches = batch['final_scores'].detach()
         kps0, depth0 = batch['kps0'].detach().requires_grad_(), batch['depth_kp0'].detach().requires_grad_()
         kps1, depth1 = batch['kps1'].detach().requires_grad_(), batch['depth_kp1'].detach().requires_grad_()
 
+        # Calculate loss with ground truth depth images
+        depth_loss = None
+        if is_train:
+            reshaped_gt_depth1 = np.reshape(gt_depth1, (gt_depth1.shape[0], 1,
+                                                        gt_depth1.shape[1]*gt_depth1.shape[2]))
+            tensor_gt_depth1 = torch.tensor(reshaped_gt_depth1)
+            scaled_tensor_gt_depth1 = (tensor_gt_depth1 - 0) / (255 - 0)
+            reshaped_gt_depth2 = np.reshape(gt_depth2, (gt_depth2.shape[0], 1,
+                                                       gt_depth1.shape[1]*gt_depth1.shape[2]))
+            tensor_gt_depth2 = torch.tensor(reshaped_gt_depth2)
+            scaled_tensor_gt_depth2 = (tensor_gt_depth2 - 0) / (255 - 0)
+
+            loss1 = torch.nn.functional.mse_loss(depth0.to('cpu'), scaled_tensor_gt_depth1.to('cpu'))
+            loss2 = torch.nn.functional.mse_loss(depth1.to('cpu'), scaled_tensor_gt_depth2.to('cpu'))
+            
+            mean_depth_loss = (loss1 + loss2) / 2.0
+            depth_loss = mean_depth_loss.item()
+        
         # Define ground truth pose parameters
         Rgt, tgt, K0, K1 = self.read_pose_parameters(batch)
 
@@ -293,6 +311,9 @@ class MetricPoseLoss(nn.Module):
         outputs['depth1'] = depth1
         outputs['mask_topk'] = mask_topk
         gradients = gradients.reshape(B, num_kpts, num_kpts)
+        
+        if depth_loss != None:
+            avg_loss = avg_loss + depth_loss
 
         return avg_loss, outputs, [gradients], num_valid_h
 

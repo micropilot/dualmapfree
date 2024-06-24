@@ -108,7 +108,8 @@ class MapFreeScene(data.Dataset):
     def __getitem__(self, index):
         # image paths (relative to scene_root)
         im1_path, im2_path = self.get_pair_path(self.pairs[index])
-
+        image1_path = str(self.scene_root) +'/'+ im1_path
+        image2_path = str(self.scene_root) +'/'+ im2_path
         # load color images
         image1 = read_color_image(self.scene_root / im1_path,
                                   self.resize, augment_fn=self.transforms)
@@ -155,6 +156,8 @@ class MapFreeScene(data.Dataset):
             'scene_root': str(self.scene_root),
             'pair_id': index*self.sample_factor,
             'pair_names': (im1_path, im2_path),
+            'gt_depth1_path': image1_path.replace("data","depth_jpg"),
+            'gt_depth2_path': image2_path.replace("data","depth_jpg"),
         }
 
         return data
