@@ -342,12 +342,7 @@ class MicKeyTrainingModel(pl.LightningModule):
                 patch_means_reshaped = patch_means.reshape(resize_dim[0] // patch_size, 
                                                            resize_dim[1] // patch_size)
                 batch_outputs.append(patch_means_reshaped)
-                gt_depth = np.stack(batch_outputs)
-                reshaped_gt_depth = np.reshape(gt_depth, (gt_depth.shape[0], 1,
-                                                        gt_depth.shape[1]*gt_depth.shape[2]))
-                tensor_gt_depth = torch.tensor(reshaped_gt_depth)
-                scaled_tensor_gt_depth = (tensor_gt_depth - 0) / (255 - 0)
-            
+    
             except Exception as e:
                 print(f"An error occurred while processing {path}: {e}")
                 if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
@@ -356,12 +351,12 @@ class MicKeyTrainingModel(pl.LightningModule):
                     resize_dim = (518, 518)
                 zeros_shape = (resize_dim[0] // patch_size, resize_dim[1] // patch_size)
                 batch_outputs.append(np.zeros(zeros_shape))
-                gt_depth = np.stack(batch_outputs)
-                reshaped_gt_depth = np.reshape(gt_depth, (gt_depth.shape[0], 1,
-                                                          gt_depth.shape[1]*gt_depth.shape[2]))
-                tensor_gt_depth = torch.tensor(reshaped_gt_depth)
-                scaled_tensor_gt_depth = (tensor_gt_depth - 0) / (255 - 0)
-        
+
+        gt_depth = np.stack(batch_outputs)
+        reshaped_gt_depth = np.reshape(gt_depth, (gt_depth.shape[0], 1,
+                                                gt_depth.shape[1]*gt_depth.shape[2]))
+        tensor_gt_depth = torch.tensor(reshaped_gt_depth)
+        scaled_tensor_gt_depth = (tensor_gt_depth - 0) / (255 - 0)
         return scaled_tensor_gt_depth
         
     def is_eval_model(self, is_eval):
