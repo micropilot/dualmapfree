@@ -55,13 +55,14 @@ class MicKeyTrainingModel(pl.LightningModule):
 
         self(batch)
         self.prepare_batch_for_loss(batch, batch_idx)
-        # print(batch['gt_depth1_path'])
+
         gt_depth1 = self.ground_depth(batch['gt_depth1_path'])
         gt_depth2 = self.ground_depth(batch['gt_depth2_path'])
 
         avg_loss, outputs, probs_grad, num_its = self.loss_fn(batch,self.is_train,gt_depth1,gt_depth2)
         
         training_step_ok = self.backward_step(batch, outputs, probs_grad, avg_loss, num_its)
+        
         if self.cfg.DATASET.DATA_SOURCE == "MapFree":
             self.tensorboard_log_step(batch, avg_loss, outputs, probs_grad, training_step_ok)
 
@@ -71,11 +72,11 @@ class MicKeyTrainingModel(pl.LightningModule):
             self.loss_fn.topK = self.topK
 
     def validation_step(self, batch, batch_idx):
-
+        self.is_train = False
         self.is_eval_model(True)
         self(batch)
         self.prepare_batch_for_loss(batch, batch_idx)
-
+        
         # validation metrics
         avg_loss, outputs, probs_grad, num_its = self.loss_fn(batch,self.is_train)
         outputs['loss'] = avg_loss
@@ -341,6 +342,12 @@ class MicKeyTrainingModel(pl.LightningModule):
                 patch_means_reshaped = patch_means.reshape(resize_dim[0] // patch_size, 
                                                            resize_dim[1] // patch_size)
                 batch_outputs.append(patch_means_reshaped)
+                gt_depth = np.stack(batch_outputs)
+                reshaped_gt_depth = np.reshape(gt_depth, (gt_depth.shape[0], 1,
+                                                        gt_depth.shape[1]*gt_depth.shape[2]))
+                tensor_gt_depth = torch.tensor(reshaped_gt_depth)
+                scaled_tensor_gt_depth = (tensor_gt_depth - 0) / (255 - 0)
+            
             except Exception as e:
                 print(f"An error occurred while processing {path}: {e}")
                 if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
@@ -349,8 +356,12 @@ class MicKeyTrainingModel(pl.LightningModule):
                     resize_dim = (518, 518)
                 zeros_shape = (resize_dim[0] // patch_size, resize_dim[1] // patch_size)
                 batch_outputs.append(np.zeros(zeros_shape))
+                reshaped_gt_depth = np.reshape(gt_depth, (gt_depth.shape[0], 1,
+                                                          gt_depth.shape[1]*gt_depth.shape[2]))
+                tensor_gt_depth = torch.tensor(reshaped_gt_depth)
+                scaled_tensor_gt_depth = (tensor_gt_depth - 0) / (255 - 0)
         
-        return np.stack(batch_outputs)
+        return scaled_tensor_gt_depth
         
     def is_eval_model(self, is_eval):
         if is_eval:

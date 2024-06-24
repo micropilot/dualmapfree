@@ -18,6 +18,7 @@ class MetricPoseLoss(nn.Module):
         # Defien the loss parameters
         self.define_loss_function(cfg)
         self.populate_loss_parameters(cfg)
+        self.config = cfg
 
     def define_loss_function(self, cfg):
 
@@ -82,18 +83,10 @@ class MetricPoseLoss(nn.Module):
 
         # Calculate loss with ground truth depth images
         depth_loss = None
-        if is_train:
-            reshaped_gt_depth1 = np.reshape(gt_depth1, (gt_depth1.shape[0], 1,
-                                                        gt_depth1.shape[1]*gt_depth1.shape[2]))
-            tensor_gt_depth1 = torch.tensor(reshaped_gt_depth1)
-            scaled_tensor_gt_depth1 = (tensor_gt_depth1 - 0) / (255 - 0)
-            reshaped_gt_depth2 = np.reshape(gt_depth2, (gt_depth2.shape[0], 1,
-                                                       gt_depth1.shape[1]*gt_depth1.shape[2]))
-            tensor_gt_depth2 = torch.tensor(reshaped_gt_depth2)
-            scaled_tensor_gt_depth2 = (tensor_gt_depth2 - 0) / (255 - 0)
+        if is_train and self.config.VARIANTS.GT_DEPTH:
 
-            loss1 = torch.nn.functional.mse_loss(depth0.to('cpu'), scaled_tensor_gt_depth1.to('cpu'))
-            loss2 = torch.nn.functional.mse_loss(depth1.to('cpu'), scaled_tensor_gt_depth2.to('cpu'))
+            loss1 = torch.nn.functional.mse_loss(depth0.to('cpu'), gt_depth1.to('cpu'))
+            loss2 = torch.nn.functional.mse_loss(depth1.to('cpu'), gt_depth2.to('cpu'))
             
             mean_depth_loss = (loss1 + loss2) / 2.0
             depth_loss = mean_depth_loss.item()
