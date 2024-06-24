@@ -77,9 +77,14 @@ class MetricPoseLoss(nn.Module):
     def forward(self,batch,is_train,gt_depth1=None,gt_depth2=None):
 
         # Detach output of the network and accumulate gradients (later use for the direct signal, ie, 3D coordinates)
-        matches = batch['final_scores'].detach()
-        kps0, depth0 = batch['kps0'].detach().requires_grad_(), batch['depth_kp0'].detach().requires_grad_()
-        kps1, depth1 = batch['kps1'].detach().requires_grad_(), batch['depth_kp1'].detach().requires_grad_()
+        if self.config.VARIANTS.FROZEN_DEPTH:
+            matches = batch['final_scores'].detach()
+            kps0, depth0 = batch['kps0'].detach().requires_grad_(False), batch['depth_kp0'].detach().requires_grad_(False)
+            kps1, depth1 = batch['kps1'].detach().requires_grad_(False), batch['depth_kp1'].detach().requires_grad_(False)
+        else:
+            matches = batch['final_scores'].detach()
+            kps0, depth0 = batch['kps0'].detach().requires_grad_(), batch['depth_kp0'].detach().requires_grad_()
+            kps1, depth1 = batch['kps1'].detach().requires_grad_(), batch['depth_kp1'].detach().requires_grad_()
 
         # Calculate loss with ground truth depth images
         depth_loss = None
@@ -307,6 +312,6 @@ class MetricPoseLoss(nn.Module):
         
         if depth_loss != None:
             avg_loss = avg_loss + depth_loss
-
+        avg_loss.requires_grad_(True)
         return avg_loss, outputs, [gradients], num_valid_h
 

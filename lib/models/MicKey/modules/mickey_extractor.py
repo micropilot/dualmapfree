@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+from PIL import Image
+import numpy as np
 from math import sqrt
 from lib.models.MicKey.modules.DINO_modules.dinov2 import vit_large
 from lib.models.MicKey.modules.att_layers.transformer import Transformer_self_att
@@ -44,8 +46,7 @@ class MicKey_Extractor(nn.Module):
         self.dsc_head = DeepResBlock_desc(cfg['MICKEY'])
         self.det_head = DeepResBlock_det(cfg['MICKEY'])
 
-    def forward(self, x):
-
+    def forward(self, x, gt_depth_path):
         if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
             B, C, H, W = x.shape
             x = x[:, :, :self.dino_downfactor * (H//self.dino_downfactor), :self.dino_downfactor * (W//self.dino_downfactor)]
@@ -58,10 +59,19 @@ class MicKey_Extractor(nn.Module):
             dinov2_features = x.view(x.shape[0], x.shape[1], int(sqrt(x.shape[2]))
                                      ,int(sqrt(x.shape[2])))
             
-        scrs = self.det_head(dinov2_features)
-        kpts = self.det_offset(dinov2_features)
-        depths = self.depth_head(dinov2_features)
-        dscs = self.dsc_head(dinov2_features)
+        if self.cfg.VARIANTS.FROZEN_DEPTH:
+            scrs = self.det_head(dinov2_features)
+            kpts = self.det_offset(dinov2_features)
+            with torch.no_grad():
+                gt_depth = self.ground_depth(gt_depth_path)
+                depths = gt_depth.to('cuda')
+            dscs = self.dsc_head(dinov2_features)
+        else:
+            scrs = self.det_head(dinov2_features)
+            kpts = self.det_offset(dinov2_features)
+            depths = self.depth_head(dinov2_features)
+            dscs = self.dsc_head(dinov2_features)
+            
 
         return kpts, depths, scrs, dscs
 
@@ -71,6 +81,47 @@ class MicKey_Extractor(nn.Module):
         self.det_offset.train(mode)
         self.det_head.train(mode)
 
+    def ground_depth(self, paths, patch_size=14):
+        batch_outputs = []
+        for path in paths:
+            try:
+                im = Image.open(path)
+                im_gray = im.convert('L')
+    
+                if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
+                    resize_dim = im_gray.size  
+                elif self.cfg.DATASET.DATA_SOURCE == 'RapidLoad':
+                    resize_dim = (518, 518) 
+    
+                im_resized = im_gray.resize(resize_dim)
+                im_array = np.array(im_resized)
+    
+                patches = []
+                for i in range(0, im_array.shape[0], patch_size):
+                    for j in range(0, im_array.shape[1], patch_size):
+                        patch = im_array[i:i+patch_size, j:j+patch_size]
+                        if patch.shape == (patch_size, patch_size):  
+                            patches.append(patch)
+    
+                patches_array = np.array(patches)
+                patch_means = patches_array.mean(axis=(1, 2))
+                patch_means_reshaped = patch_means.reshape(resize_dim[0] // patch_size, 
+                                                           resize_dim[1] // patch_size)
+                batch_outputs.append(patch_means_reshaped)
+    
+            except Exception as e:
+                print(f"An error occurred while processing {path}: {e}")
+                if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
+                    resize_dim = (540,720)
+                elif self.cfg.DATASET.DATA_SOURCE == 'RapidLoad':
+                    resize_dim = (518, 518)
+                zeros_shape = (resize_dim[0] // patch_size, resize_dim[1] // patch_size)
+                batch_outputs.append(np.zeros(zeros_shape))
+
+        gt_depth = np.stack(batch_outputs)
+        tensor_gt_depth = torch.tensor(gt_depth)
+        scaled_tensor_gt_depth = (tensor_gt_depth - 0) / (255 - 0)
+        return scaled_tensor_gt_depth.to(torch.float32)
 
 class DeepResBlock_det(torch.nn.Module):
     def __init__(self, config, padding_mode = 'zeros'):

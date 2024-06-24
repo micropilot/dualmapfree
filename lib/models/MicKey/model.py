@@ -52,7 +52,6 @@ class MicKeyTrainingModel(pl.LightningModule):
         self.compute_matches(data)
 
     def training_step(self, batch, batch_idx):
-
         self(batch)
         self.prepare_batch_for_loss(batch, batch_idx)
 
@@ -97,6 +96,7 @@ class MicKeyTrainingModel(pl.LightningModule):
         return outputs
 
     def backward_step(self, batch, outputs, probs_grad, avg_loss, num_its):
+        
         opt = self.optimizers()
 
         # update model
@@ -110,36 +110,37 @@ class MicKeyTrainingModel(pl.LightningModule):
         avg_loss.backward()
 
         invalid_probs = torch.isnan(probs_grad[0]).any()
-        invalid_kps0 = (torch.isnan(outputs['kps0'].grad).any() or torch.isinf(outputs['kps0'].grad).any())
-        invalid_kps1 = (torch.isnan(outputs['kps1'].grad).any() or torch.isinf(outputs['kps1'].grad).any())
-        invalid_depth0 = (torch.isnan(outputs['depth0'].grad).any() or torch.isinf(outputs['depth0'].grad).any())
-        invalid_depth1 = (torch.isnan(outputs['depth1'].grad).any() or torch.isinf(outputs['depth1'].grad).any())
+        # invalid_kps0 = (torch.isnan(outputs['kps0'].grad).any() or torch.isinf(outputs['kps0'].grad).any())
+        # invalid_kps1 = (torch.isnan(outputs['kps1'].grad).any() or torch.isinf(outputs['kps1'].grad).any())
+        # invalid_depth0 = (torch.isnan(outputs['depth0'].grad).any() or torch.isinf(outputs['depth0'].grad).any())
+        # invalid_depth1 = (torch.isnan(outputs['depth1'].grad).any() or torch.isinf(outputs['depth1'].grad).any())
 
         if invalid_probs:
             print('Found NaN/Inf in probs!')
             return False
 
-        if invalid_depth0 or invalid_depth1:
-            print('Found NaN/Inf in depth0/depth1 gradients!')
-            return False
+        # if invalid_depth0 or invalid_depth1:
+        #     print('Found NaN/Inf in depth0/depth1 gradients!')
+        #     return False
 
-        if batch['kps0'].requires_grad:
+        # if batch['kps0'].requires_grad:
 
-            if invalid_kps0 or invalid_kps1:
-                print('Found NaN/Inf in kps0/kps1 gradients!')
-                return False
-
-            torch.autograd.backward((torch.log(batch['final_scores'] + 1e-16),
-                                 batch['kps0'], batch['kps1'], batch['depth_kp0'], batch['depth_kp1']),
-                                (probs_grad[0], outputs['kps0'].grad, outputs['kps1'].grad,
-                                 outputs['depth0'].grad, outputs['depth1'].grad))
-        elif batch['depth0'].requires_grad:
-            torch.autograd.backward((torch.log(batch['final_scores'] + 1e-16),
-                                     batch['depth_kp0'], batch['depth_kp1']),
-                                    (probs_grad[0], outputs['depth0'].grad, outputs['depth1'].grad))
-        else:
-            torch.autograd.backward((torch.log(batch['final_scores'] + 1e-16)),
-                                    (probs_grad[0]))
+        #     if invalid_kps0 or invalid_kps1:
+        #         print('Found NaN/Inf in kps0/kps1 gradients!')
+        #         return False
+            
+        #     torch.autograd.backward((torch.log(batch['final_scores'] + 1e-16),
+        #                          batch['kps0'], batch['kps1'], batch['depth_kp0'], batch['depth_kp1']),
+        #                         (probs_grad[0], outputs['kps0'].grad, outputs['kps1'].grad,
+        #                          outputs['depth0'].grad, outputs['depth1'].grad))
+        #     print("hell")
+        # elif batch['depth0'].requires_grad:
+        #     torch.autograd.backward((torch.log(batch['final_scores'] + 1e-16),
+        #                              batch['depth_kp0'], batch['depth_kp1']),
+        #                             (probs_grad[0], outputs['depth0'].grad, outputs['depth1'].grad))
+        # else:
+        #     torch.autograd.backward((torch.log(batch['final_scores'] + 1e-16)),
+        #                             (probs_grad[0]))
 
         # add gradient clipping after backward to avoid gradient exploding
         torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=5)
