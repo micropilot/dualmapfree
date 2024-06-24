@@ -356,6 +356,7 @@ class MicKeyTrainingModel(pl.LightningModule):
                     resize_dim = (518, 518)
                 zeros_shape = (resize_dim[0] // patch_size, resize_dim[1] // patch_size)
                 batch_outputs.append(np.zeros(zeros_shape))
+                gt_depth = np.stack(batch_outputs)
                 reshaped_gt_depth = np.reshape(gt_depth, (gt_depth.shape[0], 1,
                                                           gt_depth.shape[1]*gt_depth.shape[2]))
                 tensor_gt_depth = torch.tensor(reshaped_gt_depth)
