@@ -108,6 +108,9 @@ class RapidLoadScene(data.Dataset):
     def __getitem__(self, index):
         # image paths (relative to scene_root)
         im1_path, im2_path = self.get_pair_path(self.pairs[index])
+        image1_path = str(self.scene_root) +'/'+ im1_path
+        image2_path = str(self.scene_root) +'/'+ im2_path
+        
         modified_scene_root = Path(str(self.scene_root).replace('data', 'feat_im'))
         feat_im1_path = str(modified_scene_root) +"/" + str(Path(im1_path).parent.name) + "/"+ str(Path(im1_path).parent.parent.name) + str(Path(im1_path).stem) + "_feature.png"
         
@@ -157,8 +160,8 @@ class RapidLoadScene(data.Dataset):
             'scene_root': str(self.scene_root),
             'pair_id': index*self.sample_factor,
             'pair_names': (im1_path, im2_path),
-            'gt_depth1_path': feat_im1_path.replace("_feature.png",".jpg").replace("feat_im","depth_jpg"),
-            'gt_depth2_path': feat_im2_path.replace("_feature.png",".jpg").replace("feat_im","depth_jpg"),
+            'gt_depth1_path': image1_path.replace("data","depth"),
+            'gt_depth2_path': image2_path.replace("data","depth"),
         }
 
         return data
