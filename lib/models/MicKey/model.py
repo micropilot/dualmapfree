@@ -313,32 +313,43 @@ class MicKeyTrainingModel(pl.LightningModule):
                     self.compute_matches.state_dict()[param_tensor]
 
 
+
     def ground_depth(self, paths, patch_size=14):
         batch_outputs = []
         for path in paths:
-            im = Image.open(path)
-            im_gray = im.convert('L')
-            
-            if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
-                resize_dim = im_gray.size  
-            else:
-                resize_dim = (518, 518)  
+            try:
+                im = Image.open(path)
+                im_gray = im.convert('L')
     
-            im_resized = im_gray.resize(resize_dim)
-            im_array = np.array(im_resized)
+                if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
+                    resize_dim = im_gray.size  
+                elif self.cfg.DATASET.DATA_SOURCE == 'RapidLoad':
+                    resize_dim = (518, 518) 
     
-            patches = []
-            for i in range(0, im_array.shape[0], patch_size):
-                for j in range(0, im_array.shape[1], patch_size):
-                    patch = im_array[i:i+patch_size, j:j+patch_size]
-                    if patch.shape == (patch_size, patch_size):  
-                        patches.append(patch)
+                im_resized = im_gray.resize(resize_dim)
+                im_array = np.array(im_resized)
     
-            patches_array = np.array(patches)
-            patch_means = patches_array.mean(axis=(1, 2))
-            patch_means_reshaped = patch_means.reshape(resize_dim[0] // patch_size, 
-                                                       resize_dim[1] // patch_size)
-            batch_outputs.append(patch_means_reshaped)
+                patches = []
+                for i in range(0, im_array.shape[0], patch_size):
+                    for j in range(0, im_array.shape[1], patch_size):
+                        patch = im_array[i:i+patch_size, j:j+patch_size]
+                        if patch.shape == (patch_size, patch_size):  
+                            patches.append(patch)
+    
+                patches_array = np.array(patches)
+                patch_means = patches_array.mean(axis=(1, 2))
+                patch_means_reshaped = patch_means.reshape(resize_dim[0] // patch_size, 
+                                                           resize_dim[1] // patch_size)
+                batch_outputs.append(patch_means_reshaped)
+            except Exception as e:
+                print(f"An error occurred while processing {path}: {e}")
+                if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
+                    resize_dim = (540,720)
+                elif self.cfg.DATASET.DATA_SOURCE == 'RapidLoad':
+                    resize_dim = (518, 518)
+                zeros_shape = (resize_dim[0] // patch_size, resize_dim[1] // patch_size)
+                batch_outputs.append(np.zeros(zeros_shape))
+        
         return np.stack(batch_outputs)
         
     def is_eval_model(self, is_eval):
