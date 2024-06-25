@@ -45,7 +45,6 @@ class MicKey_Extractor(nn.Module):
         self.det_head = DeepResBlock_det(cfg['MICKEY'])
 
     def forward(self, x):
-
         if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
             B, C, H, W = x.shape
             x = x[:, :, :self.dino_downfactor * (H//self.dino_downfactor), :self.dino_downfactor * (W//self.dino_downfactor)]

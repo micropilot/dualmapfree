@@ -16,7 +16,3 @@ tests/data/
 __pycache__/
 *.py[cod]
 *$py.class
-
-
-  5 changes: 2 additions & 3 deletions5  
-config/MicKey/curriculum_learning.yaml

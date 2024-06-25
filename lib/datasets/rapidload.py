@@ -101,13 +101,14 @@ class RapidLoadScene(data.Dataset):
     def get_pair_path(self, pair):
         seqA, imgA, seqB, imgB = pair
         return (f'seq{seqA}/frame_{imgA:05}.jpg', f'seq{seqB}/frame_{imgB:05}.jpg')
-        
+
     def __len__(self):
         return len(self.pairs)
 
     def __getitem__(self, index):
         # image paths (relative to scene_root)
         im1_path, im2_path = self.get_pair_path(self.pairs[index])
+
         image1_path = str(self.scene_root) +'/'+ im1_path
         image2_path = str(self.scene_root) +'/'+ im2_path
         
@@ -120,6 +121,11 @@ class RapidLoadScene(data.Dataset):
         image1 = read_feature_map_image(feat_im1_path,self.resize, augment_fn=self.transforms)
         image2 = read_feature_map_image(feat_im2_path,self.resize, augment_fn=self.transforms)
         
+        feat_im2_path = str(modified_scene_root) +"/" + str(Path(im2_path).parent.name) + "/"+ str(Path(im2_path).parent.parent.name) + '/' + str(Path(im2_path).stem) + "_feature.png"
+        
+        # load color images
+        image1 = read_feature_map_image(feat_im1_path,self.resize, augment_fn=self.transforms)
+        image2 = read_feature_map_image(feat_im2_path,self.resize, augment_fn=self.transforms)
         # get absolute pose of im0 and im1
         if self.test_scene:
             t1, t2, c1, c2 = np.zeros([3]), np.zeros([3]), np.zeros([3]), np.zeros([3])

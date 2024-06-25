@@ -153,5 +153,3 @@ def read_feature_map_image(image_path, resize=(640, 480), augment_fn=None):
         print(f"An error occurred: {e}")
         print(image_path)
         return torch.zeros([1024, 1369], dtype=torch.float32)
-
-
