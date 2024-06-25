@@ -46,7 +46,7 @@ class MicKey_Extractor(nn.Module):
         self.dsc_head = DeepResBlock_desc(cfg['MICKEY'])
         self.det_head = DeepResBlock_det(cfg['MICKEY'])
 
-    def forward(self, x, gt_depth_path):
+    def forward(self, x, gt_depth_path=None):
         if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
             B, C, H, W = x.shape
             x = x[:, :, :self.dino_downfactor * (H//self.dino_downfactor), :self.dino_downfactor * (W//self.dino_downfactor)]
@@ -76,8 +76,10 @@ class MicKey_Extractor(nn.Module):
         return kpts, depths, scrs, dscs
 
     def train(self, mode: bool = True):
+            
         self.dsc_head.train(mode)
-        self.depth_head.train(mode)
+        if not self.cfg.VARIANTS.FROZEN_DEPTH:
+            self.depth_head.train(mode)
         self.det_offset.train(mode)
         self.det_head.train(mode)
 

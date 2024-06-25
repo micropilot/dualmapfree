@@ -7,6 +7,7 @@ class ComputeCorrespondences(nn.Module):
     def __init__(self, cfg):
         super().__init__()
 
+        self.cfg = cfg
         # Feature extractor
         self.extractor = MicKey_Extractor(cfg)
 
@@ -54,12 +55,17 @@ class ComputeCorrespondences(nn.Module):
         # Compute detection and descriptor maps
         im0 = data['image0']
         im1 = data['image1']
-        gt_depth1_path = data['gt_depth1_path']
-        gt_depth2_path = data['gt_depth2_path']
-        # Extract independently features from im0 and im1
-        kps0, depth0, scr0, dsc0 = self.extractor(im0,gt_depth1_path)
-        kps1, depth1, scr1, dsc1 = self.extractor(im1,gt_depth2_path)
 
+        if self.cfg.VARIANTS.FROZEN_DEPTH:
+            gt_depth1_path = data['gt_depth1_path']
+            gt_depth2_path = data['gt_depth2_path']
+            # Extract independently features from im0 and im1
+            kps0, depth0, scr0, dsc0 = self.extractor(im0,gt_depth1_path)
+            kps1, depth1, scr1, dsc1 = self.extractor(im1,gt_depth2_path)
+        
+        else:
+            kps0, depth0, scr0, dsc0 = self.extractor(im0)
+            kps1, depth1, scr1, dsc1 = self.extractor(im1)
         kps0 = self.get_abs_kpts_coordinates(kps0)
         kps1 = self.get_abs_kpts_coordinates(kps1)
 
