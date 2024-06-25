@@ -8,7 +8,7 @@ class ComputeCorrespondences(nn.Module):
         super().__init__()
 
         # Feature extractor
-        self.extractor = MicKey_Extractor(cfg['MICKEY'])
+        self.extractor = MicKey_Extractor(cfg)
 
         self.dsc_dim = cfg['MICKEY']['DSC_HEAD']['LAST_DIM']
 

@@ -21,7 +21,7 @@ def train_model(args):
 
     cfg.merge_from_file(args.dataset_config)
     cfg.merge_from_file(args.config)
-
+    
     exp_name = create_exp_name(args.experiment, cfg)
     print('Start training of ' + exp_name)
 

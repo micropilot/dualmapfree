@@ -108,9 +108,18 @@ class RapidLoadScene(data.Dataset):
     def __getitem__(self, index):
         # image paths (relative to scene_root)
         im1_path, im2_path = self.get_pair_path(self.pairs[index])
-        # print(im1_path)
+
+        image1_path = str(self.scene_root) +'/'+ im1_path
+        image2_path = str(self.scene_root) +'/'+ im2_path
+        
         modified_scene_root = Path(str(self.scene_root).replace('data', 'feat_im'))
-        feat_im1_path = str(modified_scene_root) +"/" + str(Path(im1_path).parent.name) + "/"+ str(Path(im1_path).parent.parent.name) + '/' + str(Path(im1_path).stem) + "_feature.png"
+        feat_im1_path = str(modified_scene_root) +"/" + str(Path(im1_path).parent.name) + "/"+ str(Path(im1_path).parent.parent.name) + str(Path(im1_path).stem) + "_feature.png"
+        
+        feat_im2_path = str(modified_scene_root) +"/" + str(Path(im2_path).parent.name) + "/"+ str(Path(im2_path).parent.parent.name) + str(Path(im2_path).stem) + "_feature.png"
+
+        # load color images
+        image1 = read_feature_map_image(feat_im1_path,self.resize, augment_fn=self.transforms)
+        image2 = read_feature_map_image(feat_im2_path,self.resize, augment_fn=self.transforms)
         
         feat_im2_path = str(modified_scene_root) +"/" + str(Path(im2_path).parent.name) + "/"+ str(Path(im2_path).parent.parent.name) + '/' + str(Path(im2_path).stem) + "_feature.png"
         
@@ -157,6 +166,8 @@ class RapidLoadScene(data.Dataset):
             'scene_root': str(self.scene_root),
             'pair_id': index*self.sample_factor,
             'pair_names': (im1_path, im2_path),
+            'gt_depth1_path': image1_path.replace("data","depth"),
+            'gt_depth2_path': image2_path.replace("data","depth"),
         }
 
         return data

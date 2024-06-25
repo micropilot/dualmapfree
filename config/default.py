@@ -95,6 +95,9 @@ _CN.PROCRUSTES_TRAINING = CN()
 _CN.PROCRUSTES_TRAINING.MAX_CORR_DIST = None
 _CN.PROCRUSTES_TRAINING.REFINE = False      #refine pose with ICP
 
+# Variants
+_CN.VARIANTS = CN()
+_CN.VARIANTS.GT_DEPTH = None
 
 ##############  Dataset  ##############
 _CN.DATASET = CN()
@@ -137,5 +140,6 @@ _CN.TRAINING.VAL_BATCHES = None
 _CN.TRAINING.LOG_INTERVAL = None
 _CN.TRAINING.EPOCHS = None
 _CN.TRAINING.GRAD_CLIP = 0.   #  Indicates the L2 norm at which to clip the gradient. Disabled if 0
+
 
 cfg = _CN
