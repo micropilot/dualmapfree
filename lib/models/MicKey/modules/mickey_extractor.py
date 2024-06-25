@@ -8,34 +8,32 @@ class MicKey_Extractor(nn.Module):
     def __init__(self, cfg, dinov2_weights=None):
         super().__init__()
 
-        self.cfg = cfg 
+        # if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
+        #     # Define DINOv2 extractor
+        #     self.dino_channels = cfg['DINOV2']['CHANNEL_DIM']
+        #     self.dino_downfactor = cfg['DINOV2']['DOWN_FACTOR']
+        #     if dinov2_weights is None:
+        #         dinov2_weights = torch.hub.load_state_dict_from_url("https://dl.fbaipublicfiles.com/dinov2/"
+        #                                                             "dinov2_vitl14/dinov2_vitl14_pretrain.pth",
+        #                                                             map_location="cpu")
+        #     vit_kwargs = dict(img_size= 518,
+        #         patch_size= 14,
+        #         init_values = 1.0,
+        #         ffn_layer = "mlp",
+        #         block_chunks = 0,
+        #     )
 
-        if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
-            # Define DINOv2 extractor
-            self.dino_channels = cfg['DINOV2']['CHANNEL_DIM']
-            self.dino_downfactor = cfg['DINOV2']['DOWN_FACTOR']
-            if dinov2_weights is None:
-                dinov2_weights = torch.hub.load_state_dict_from_url("https://dl.fbaipublicfiles.com/dinov2/"
-                                                                    "dinov2_vitl14/dinov2_vitl14_pretrain.pth",
-                                                                    map_location="cpu")
-            vit_kwargs = dict(img_size= 518,
-                patch_size= 14,
-                init_values = 1.0,
-                ffn_layer = "mlp",
-                block_chunks = 0,
-            )
+        #     self.dinov2_vitl14 = vit_large(**vit_kwargs)
+        #     self.dinov2_vitl14.load_state_dict(dinov2_weights)
+        #     self.dinov2_vitl14.requires_grad_(False)
+        #     self.dinov2_vitl14.eval()
 
-            self.dinov2_vitl14 = vit_large(**vit_kwargs)
-            self.dinov2_vitl14.load_state_dict(dinov2_weights)
-            self.dinov2_vitl14.requires_grad_(False)
-            self.dinov2_vitl14.eval()
-
-            # Define whether DINOv2 runs on float16 or float32
-            if cfg['DINOV2']['FLOAT16']:
-                self.amp_dtype = torch.float16
-                self.dinov2_vitl14.to(self.amp_dtype)
-            else:
-                self.amp_dtype = torch.float32
+        #     # Define whether DINOv2 runs on float16 or float32
+        #     if cfg['DINOV2']['FLOAT16']:
+        #         self.amp_dtype = torch.float16
+        #         self.dinov2_vitl14.to(self.amp_dtype)
+        #     else:
+        #         self.amp_dtype = torch.float32
 
         # Define MicKey's heads
         self.depth_head = DeepResBlock_depth(cfg)
@@ -44,18 +42,17 @@ class MicKey_Extractor(nn.Module):
         self.det_head = DeepResBlock_det(cfg)
 
     def forward(self, x):
+        # if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
+        #     B, C, H, W = x.shape
+        #     x = x[:, :, :self.dino_downfactor * (H//self.dino_downfactor), :self.dino_downfactor * (W//self.dino_downfactor)]
 
-        if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
-            B, C, H, W = x.shape
-            x = x[:, :, :self.dino_downfactor * (H//self.dino_downfactor), :self.dino_downfactor * (W//self.dino_downfactor)]
-
-            with torch.no_grad():
-                dinov2_features = self.dinov2_vitl14.forward_features(x.to(self.amp_dtype))
-                dinov2_features = dinov2_features['x_norm_patchtokens'].permute(0, 2, 1).\
-                    reshape(B, self.dino_channels, H // self.dino_downfactor, W // self.dino_downfactor).float()
-        elif self.cfg.DATASET.DATA_SOURCE == 'RapidLoad':
-            dinov2_features = x
-            
+        #     with torch.no_grad():
+        #         dinov2_features = self.dinov2_vitl14.forward_features(x.to(self.amp_dtype))
+        #         dinov2_features = dinov2_features['x_norm_patchtokens'].permute(0, 2, 1).\
+        #             reshape(B, self.dino_channels, H // self.dino_downfactor, W // self.dino_downfactor).float()
+        # elif self.cfg.DATASET.DATA_SOURCE == 'RapidLoad':
+    
+        dinov2_features = x.view(32, 1024, 37, 37)
         scrs = self.det_head(dinov2_features)
         kpts = self.det_offset(dinov2_features)
         depths = self.depth_head(dinov2_features)
