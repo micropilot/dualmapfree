@@ -1,6 +1,6 @@
 DATASET:
   DATA_SOURCE: 'MapFree'
-  DATA_ROOT: '/mnt/SSD1/Niantic/data/'
+  DATA_ROOT: '/home/hitesh/data/'
   SCENES: None  # should be a list [] or None. If none, use all scenes.
   AUGMENTATION_TYPE: None
   HEIGHT: 720

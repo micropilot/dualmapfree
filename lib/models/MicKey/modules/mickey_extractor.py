@@ -46,6 +46,7 @@ class MicKey_Extractor(nn.Module):
 
     def forward(self, x):
         if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
+            torch.save(x, 'te')
             B, C, H, W = x.shape
             x = x[:, :, :self.dino_downfactor * (H//self.dino_downfactor), :self.dino_downfactor * (W//self.dino_downfactor)]
 
@@ -57,6 +58,7 @@ class MicKey_Extractor(nn.Module):
             dinov2_features = x.view(x.shape[0], x.shape[1], int(sqrt(x.shape[2]))
                                      ,int(sqrt(x.shape[2])))
             
+        print(dinov2_features.shape)
         scrs = self.det_head(dinov2_features)
         kpts = self.det_offset(dinov2_features)
         depths = self.depth_head(dinov2_features)

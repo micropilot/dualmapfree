@@ -55,11 +55,13 @@ class MicKeyTrainingModel(pl.LightningModule):
 
         self(batch)
         self.prepare_batch_for_loss(batch, batch_idx)
-
-        gt_depth1 = self.ground_depth(batch['gt_depth1_path'])
-        gt_depth2 = self.ground_depth(batch['gt_depth2_path'])
-
-        avg_loss, outputs, probs_grad, num_its = self.loss_fn(batch,self.is_train,gt_depth1,gt_depth2)
+        
+        if self.cfg.VARIANTS.GT_DEPTH:
+            gt_depth1 = self.ground_depth(batch['gt_depth1_path'])
+            gt_depth2 = self.ground_depth(batch['gt_depth2_path'])
+            avg_loss, outputs, probs_grad, num_its = self.loss_fn(batch,self.is_train,gt_depth1,gt_depth2)
+        else:
+            avg_loss, outputs, probs_grad, num_its = self.loss_fn(batch,self.is_train)
         
         training_step_ok = self.backward_step(batch, outputs, probs_grad, avg_loss, num_its)
         
