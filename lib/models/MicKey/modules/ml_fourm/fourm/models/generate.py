@@ -1042,7 +1042,7 @@ class GenerationSampler(nn.Module):
         # Input embedding -> tokenizes the modalities - Many are placeholder for now
         mod_dict = copy.deepcopy(mod_dict)
 
-        for step, schedule_step_info in tqdm(enumerate(schedule), disable=not verbose):
+        for step, schedule_step_info in tqdm(enumerate(schedule), disable = verbose):
             target_mod = schedule_step_info['target_domain']
             temp = schedule_step_info['temperature']
             cfg_scale = schedule_step_info.get('cfg_scale', 1.0)

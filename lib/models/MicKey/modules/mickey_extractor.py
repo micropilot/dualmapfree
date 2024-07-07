@@ -48,10 +48,10 @@ class MicKey_Extractor(nn.Module):
                 self.amp_dtype = torch.float32
 
         # Define MicKey's heads
-        self.depth_head = DeepResBlock_depth(cfg['MICKEY'])
-        self.det_offset = DeepResBlock_offset(cfg['MICKEY'])
-        self.dsc_head = DeepResBlock_desc(cfg['MICKEY'])
-        self.det_head = DeepResBlock_det(cfg['MICKEY'])
+        self.depth_head = DeepResBlock_depth(cfg)
+        self.det_offset = DeepResBlock_offset(cfg)
+        self.dsc_head = DeepResBlock_desc(cfg)
+        self.det_head = DeepResBlock_det(cfg)
 
     def forward(self, x):
         if self.cfg.VARIANTS.FOURM_FROZEN:
@@ -70,7 +70,6 @@ class MicKey_Extractor(nn.Module):
             dinov2_features = x.view(x.shape[0], x.shape[1], int(sqrt(x.shape[2]))
                                      ,int(sqrt(x.shape[2])))
             
-        print(dinov2_features.shape)
         scrs = self.det_head(dinov2_features)
         kpts = self.det_offset(dinov2_features)
         depths = self.depth_head(dinov2_features)
@@ -89,10 +88,13 @@ class DeepResBlock_det(torch.nn.Module):
     def __init__(self, config, padding_mode = 'zeros'):
         super().__init__()
 
-        bn = config['KP_HEADS']['BN']
-        in_channels = config['DINOV2']['CHANNEL_DIM']
-        block_dims = config['KP_HEADS']['BLOCKS_DIM']
-        add_posEnc = config['KP_HEADS']['POS_ENCODING']
+        bn = config['MICKEY']['KP_HEADS']['BN']
+        if config['VARIANTS']['FOURM_FROZEN']:
+            in_channels = 768
+        else:
+            in_channels = config['MICKEY']['DINOV2']['CHANNEL_DIM']
+        block_dims = config['MICKEY']['KP_HEADS']['BLOCKS_DIM']
+        add_posEnc = config['MICKEY']['KP_HEADS']['POS_ENCODING']
 
         self.resblock1 = BasicBlock(in_channels, block_dims[0], stride=1, bn=bn, padding_mode=padding_mode)
         self.resblock2 = BasicBlock(block_dims[0], block_dims[1], stride=1, bn=bn, padding_mode=padding_mode)
@@ -101,7 +103,7 @@ class DeepResBlock_det(torch.nn.Module):
 
         self.score = nn.Conv2d(block_dims[3], 1, kernel_size=1, stride=1, padding=0, bias=False)
 
-        self.use_softmax = config['KP_HEADS']['USE_SOFTMAX']
+        self.use_softmax = config['MICKEY']['KP_HEADS']['USE_SOFTMAX']
         self.sigmoid = torch.nn.Sigmoid()
         self.logsigmoid = torch.nn.LogSigmoid()
         self.softmax = torch.nn.Softmax(dim=-1)
@@ -167,10 +169,13 @@ class DeepResBlock_offset(torch.nn.Module):
     def __init__(self, config, padding_mode = 'zeros'):
         super().__init__()
 
-        bn = config['KP_HEADS']['BN']
-        in_channels = config['DINOV2']['CHANNEL_DIM']
-        block_dims = config['KP_HEADS']['BLOCKS_DIM']
-        add_posEnc = config['KP_HEADS']['POS_ENCODING']
+        bn = config['MICKEY']['KP_HEADS']['BN']
+        if config['VARIANTS']['FOURM_FROZEN']:
+            in_channels = 768
+        else:
+            in_channels = config['MICKEY']['DINOV2']['CHANNEL_DIM']
+        block_dims = config['MICKEY']['KP_HEADS']['BLOCKS_DIM']
+        add_posEnc = config['MICKEY']['KP_HEADS']['POS_ENCODING']
         self.sigmoid = torch.nn.Sigmoid()
 
         self.resblock1 = BasicBlock(in_channels, block_dims[0], stride=1, bn=bn, padding_mode=padding_mode)
@@ -203,13 +208,16 @@ class DeepResBlock_depth(torch.nn.Module):
     def __init__(self, config, padding_mode = 'zeros'):
         super().__init__()
 
-        bn = config['KP_HEADS']['BN']
-        in_channels = config['DINOV2']['CHANNEL_DIM']
-        block_dims = config['KP_HEADS']['BLOCKS_DIM']
-        add_posEnc = config['KP_HEADS']['POS_ENCODING']
+        bn = config['MICKEY']['KP_HEADS']['BN']
+        if config['VARIANTS']['FOURM_FROZEN']:
+            in_channels = 768
+        else:
+            in_channels = config['MICKEY']['DINOV2']['CHANNEL_DIM']
+        block_dims = config['MICKEY']['KP_HEADS']['BLOCKS_DIM']
+        add_posEnc = config['MICKEY']['KP_HEADS']['POS_ENCODING']
 
-        self.use_depth_sigmoid = config['KP_HEADS']['USE_DEPTHSIGMOID']
-        self.max_depth = config['KP_HEADS']['MAX_DEPTH']
+        self.use_depth_sigmoid = config['MICKEY']['KP_HEADS']['USE_DEPTHSIGMOID']
+        self.max_depth = config['MICKEY']['KP_HEADS']['MAX_DEPTH']
         self.sigmoid = torch.nn.Sigmoid()
 
         self.resblock1 = BasicBlock(in_channels, block_dims[0], stride=1, bn=bn, padding_mode=padding_mode)
@@ -243,12 +251,15 @@ class DeepResBlock_desc(torch.nn.Module):
     def __init__(self, config, padding_mode = 'zeros'):
         super().__init__()
 
-        bn = config['KP_HEADS']['BN']
-        last_dim = config['DSC_HEAD']['LAST_DIM']
-        in_channels = config['DINOV2']['CHANNEL_DIM']
-        block_dims = config['KP_HEADS']['BLOCKS_DIM']
-        add_posEnc = config['DSC_HEAD']['POS_ENCODING']
-        self.norm_desc = config['DSC_HEAD']['NORM_DSC']
+        bn = config['MICKEY']['KP_HEADS']['BN']
+        last_dim = config['MICKEY']['DSC_HEAD']['LAST_DIM']
+        if config['VARIANTS']['FOURM_FROZEN']:
+            in_channels = 768
+        else:
+            in_channels = config['MICKEY']['DINOV2']['CHANNEL_DIM']
+        block_dims = config['MICKEY']['KP_HEADS']['BLOCKS_DIM']
+        add_posEnc = config['MICKEY']['DSC_HEAD']['POS_ENCODING']
+        self.norm_desc = config['MICKEY']['DSC_HEAD']['NORM_DSC']
 
         self.resblock1 = BasicBlock(in_channels, block_dims[0], stride=1, bn=bn, padding_mode=padding_mode)
         self.resblock2 = BasicBlock(block_dims[0], block_dims[1], stride=1, bn=bn, padding_mode=padding_mode)

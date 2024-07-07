@@ -301,8 +301,8 @@ def decode_tok_dinov2(mod_dict, tokenizers, key='tok_dinov2', image_size=224, pa
     n_patches = image_size // patch_size
     img_tok = rearrange(mod_dict[key]['tensor'], "b (nh nw) -> b nh nw", nh=n_patches, nw=n_patches)
     rec = tokenizers[get_transform_key(key)].decode_tokens(img_tok)
-    pca_viz = [pca_visualize(feat) for feat in rec]
-    pca_viz = np_squeeze(np.stack(pca_viz), axis=0)
+#     pca_viz = [pca_visualize(feat) for feat in rec]
+#     pca_viz = np_squeeze(np.stack(pca_viz), axis=0)
     return rec
 
 def decode_tok_imagebind(mod_dict, tokenizers, key='tok_imagebind', image_size=224, patch_size=14):

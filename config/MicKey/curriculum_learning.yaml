@@ -33,7 +33,7 @@ FEATURE_MATCHER:
 
 TRAINING:
   NUM_GPUS: 1
-  BATCH_SIZE: 12 # BS for each dataloader (in every GPU)
+  BATCH_SIZE: 2 # BS for each dataloader (in every GPU)
   NUM_WORKERS: 12
   SAMPLER: 'scene_balance'
   N_SAMPLES_SCENE: 100
