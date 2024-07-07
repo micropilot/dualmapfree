@@ -98,7 +98,7 @@ _CN.PROCRUSTES_TRAINING.REFINE = False      #refine pose with ICP
 # Variants
 _CN.VARIANTS = CN()
 _CN.VARIANTS.GT_DEPTH = None
-_CN.VARIANTS.4M_FROZEN = None
+_CN.VARIANTS.FOURM_FROZEN = None
 
 ##############  Dataset  ##############
 _CN.DATASET = CN()

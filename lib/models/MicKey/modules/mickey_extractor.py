@@ -1,3 +1,5 @@
+import os
+import sys
 import torch
 import torch.nn as nn
 from math import sqrt
@@ -5,13 +7,20 @@ from lib.models.MicKey.modules.DINO_modules.dinov2 import vit_large
 from lib.models.MicKey.modules.att_layers.transformer import Transformer_self_att
 from lib.models.MicKey.modules.utils.extractor_utils import desc_l2norm, BasicBlock
 
+fourm_path = os.getcwd() + "/lib/models/MicKey/modules/ml_fourm/"
+sys.path.append(fourm_path)
+from fourm_frozen.frozen import FourmDinov2
+
 class MicKey_Extractor(nn.Module):
     def __init__(self, cfg, dinov2_weights=None):
         super().__init__()
 
         self.cfg = cfg 
-
-        if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
+        
+        if self.cfg.VARIANTS.FOURM_FROZEN:
+            self.fourm = FourmDinov2()
+        
+        elif self.cfg.DATASET.DATA_SOURCE == 'MapFree':
             # Define DINOv2 extractor
             self.dino_channels = cfg['MICKEY']['DINOV2']['CHANNEL_DIM']
             self.dino_downfactor = cfg['MICKEY']['DINOV2']['DOWN_FACTOR']
@@ -45,8 +54,10 @@ class MicKey_Extractor(nn.Module):
         self.det_head = DeepResBlock_det(cfg['MICKEY'])
 
     def forward(self, x):
-        if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
-            torch.save(x, 'te')
+        if self.cfg.VARIANTS.FOURM_FROZEN:
+            dinov2_features = self.fourm(x,self.cfg.TRAINING.BATCH_SIZE)['tok_dinov2@224']
+        
+        elif self.cfg.DATASET.DATA_SOURCE == 'MapFree':
             B, C, H, W = x.shape
             x = x[:, :, :self.dino_downfactor * (H//self.dino_downfactor), :self.dino_downfactor * (W//self.dino_downfactor)]
 
@@ -54,6 +65,7 @@ class MicKey_Extractor(nn.Module):
                 dinov2_features = self.dinov2_vitl14.forward_features(x.to(self.amp_dtype))
                 dinov2_features = dinov2_features['x_norm_patchtokens'].permute(0, 2, 1).\
                     reshape(B, self.dino_channels, H // self.dino_downfactor, W // self.dino_downfactor).float()
+        
         elif self.cfg.DATASET.DATA_SOURCE == 'RapidLoad':
             dinov2_features = x.view(x.shape[0], x.shape[1], int(sqrt(x.shape[2]))
                                      ,int(sqrt(x.shape[2])))
