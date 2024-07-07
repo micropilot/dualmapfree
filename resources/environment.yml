@@ -44,3 +44,4 @@ dependencies:
     - datasets>=0.17
     - wandb>=0.13.5
     - webdataset>=0.2.86
+    - faiss-gpu
