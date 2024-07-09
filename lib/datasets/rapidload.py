@@ -166,8 +166,8 @@ class RapidLoadScene(data.Dataset):
             'scene_root': str(self.scene_root),
             'pair_id': index*self.sample_factor,
             'pair_names': (im1_path, im2_path),
-            'gt_depth1_path': image1_path.replace("data","depth"),
-            'gt_depth2_path': image2_path.replace("data","depth"),
+            'gt_depth1_path': image1_path.replace("original", "depth"),
+            'gt_depth2_path': image2_path.replace("original", "depth"),
         }
 
         return data

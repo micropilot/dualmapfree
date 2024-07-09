@@ -1,4 +1,5 @@
 weights/
+checkpoints
 .env
 __pycache__/
 *.pyc
