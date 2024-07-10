@@ -315,11 +315,9 @@ class MicKeyTrainingModel(pl.LightningModule):
 
     def ground_depth(self, paths, patch_size=14):
         batch_outputs = []
-        print(paths)
         for path in paths:
             try:
                 im = Image.open(path)
-                im.save("im_depth.jpg")
                 im_gray = im.convert('L')
     
                 if self.cfg.DATASET.DATA_SOURCE == 'MapFree':
