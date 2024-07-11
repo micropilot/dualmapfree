@@ -10,7 +10,7 @@ MICKEY:
     BLOCKS_DIM: [512, 256, 128, 64]
     BN: True
     USE_SOFTMAX: True
-    USE_DEPTHSIGMOID: False
+    USE_DEPTHSIGMOID: True
     MAX_DEPTH: 60
     POS_ENCODING: True
 
@@ -32,7 +32,7 @@ FEATURE_MATCHER:
   USE_TRANSFORMER: False
 
 TRAINING:
-  NUM_GPUS: 8
+  NUM_GPUS: 1
   BATCH_SIZE: 12 # BS for each dataloader (in every GPU)
   NUM_WORKERS: 12
   SAMPLER: 'scene_balance'

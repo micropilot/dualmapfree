@@ -342,7 +342,7 @@ class MicKeyTrainingModel(pl.LightningModule):
         reshaped_gt_depth = np.reshape(gt_depth, (gt_depth.shape[0], 1,
                                                 gt_depth.shape[1]*gt_depth.shape[2]))
         tensor_gt_depth = torch.tensor(reshaped_gt_depth)
-        scaled_tensor_gt_depth = (255 - tensor_gt_depth) / (255 - 0)
+        scaled_tensor_gt_depth = 60 * ((255 - tensor_gt_depth) / (255 - 0))
         return scaled_tensor_gt_depth
         
     def is_eval_model(self, is_eval):
