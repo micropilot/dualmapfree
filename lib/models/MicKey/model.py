@@ -342,7 +342,7 @@ class MicKeyTrainingModel(pl.LightningModule):
         reshaped_gt_depth = np.reshape(gt_depth, (gt_depth.shape[0], 1,
                                                 gt_depth.shape[1]*gt_depth.shape[2]))
         tensor_gt_depth = torch.tensor(reshaped_gt_depth)
-        if self.cfg['MICKEY']['KP_HEADS']['MAX_DEPTH']:
+        if self.cfg['MICKEY']['KP_HEADS']['USE_DEPTHSIGMOID']:
             scaled_tensor_gt_depth = self.cfg['MICKEY']['KP_HEADS']['MAX_DEPTH'] * ((255 - tensor_gt_depth) / (255 - 0))
         else:
             scaled_tensor_gt_depth = ((255 - tensor_gt_depth) / (255 - 0))
