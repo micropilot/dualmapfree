@@ -12,6 +12,18 @@ warnings.filterwarnings("ignore")
 import requests
 import time
 
+def chunks(lst, n):
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+def open_image(path):
+    try:
+        return Image.open(path), path
+    except Exception as e:
+        print(f"Error opening image {path}: {e}")
+        return None
+    
+    
 class ImageCaptioner:
     def __init__(self, model_id, image_dir, batch_size=10, webhook_url=None):
         self.model_id = model_id
@@ -43,11 +55,14 @@ class ImageCaptioner:
         return all_images
 
     def generate_captions(self, image_batches):
+        total_batches = len(image_batches)
         start_time = time.time()
-        for image_batch_tuple in tqdm(image_batches, desc="Generating captions"):
-            if time.time() - start_time > 900:  # 15 minutes in seconds
-                self.send_slack_alert("Caption generation process is still running.")
-                start_time = time.time()  # Reset the timer
+        for  batch_index, image_batch_tuple in enumerate(tqdm(image_batches, desc="Generating captions")):
+            if time.time() - start_time > 25:  
+                percentage = (batch_index + 1) / total_batches * 100
+                progress_message = f"Processed batch {batch_index + 1} of {total_batches}: {percentage:.2f}%."
+                self.send_slack_alert(progress_message)
+                start_time = time.time()
             
             prompts = [
                 "USER: <image>\nWrite a descriptive caption for the image, highlighting the visible elements and key features.\nASSISTANT:",
@@ -68,6 +83,7 @@ class ImageCaptioner:
     def run(self):
         try:
             image_batches = self.process_images()
+            self.send_slack_alert("Caption generation started.")
             self.generate_captions(image_batches)
             self.send_slack_alert("Caption generation completed successfully.")
         except Exception as e:
