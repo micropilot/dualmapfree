@@ -3,8 +3,8 @@ import csv
 import os
 
 
-train_scenes = glob.glob("/mnt/SSD1/Niantic/data/train/*")
-val_scenes = glob.glob("/mnt/SSD1/Niantic/data/val/*")
+train_scenes = glob.glob("/home/ubuntu/MapFree-Illinois/data/original/train/**")
+val_scenes = glob.glob("/home/ubuntu/MapFree-Illinois/data/original/val/*")
 
 
 scenes = train_scenes + val_scenes
