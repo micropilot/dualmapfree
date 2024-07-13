@@ -43,6 +43,7 @@ class ImageCaptioner:
                 self.image_paths.extend(glob.glob(os.path.join(scene_path, '**/*.jpg'), recursive=True))
         else:
             print("csv doesn't exist")
+        self.start_time = time.time()
             
     def send_slack_alert(self, message):
         """Send a message to Slack."""
@@ -58,15 +59,14 @@ class ImageCaptioner:
             images = pool.map(open_image, image_batch)
         return [img for img in images if img is not None]
 
-    def generate_captions(self, image_batches, total_batches):
-        start_time = time.time()
-        for batch_index, image_batch_tuple in enumerate(image_batches):
+    def generate_captions(self, image_batches, total_batches,batch_index):
+        for image_batch_tuple in image_batches:
             try:
-                if time.time() - start_time > 900:  
+                if time.time() - self.start_time > 900:  
                     percentage = (batch_index + 1) / total_batches * 100
                     progress_message = f"GPU {self.gpu_no}: Processed batch {batch_index + 1} of {total_batches}: {percentage:.2f}%."
                     self.send_slack_alert(progress_message)
-                    start_time = time.time()
+                    self.start_time = time.time()
                 
                 prompts = [
                     "USER: <image>\nWrite a descriptive caption for the image, highlighting the visible elements and key features.\nASSISTANT:",
@@ -95,16 +95,16 @@ class ImageCaptioner:
         try:
             image_batches = list(chunks(self.image_paths, self.batch_size))
             total_batches = len(image_batches)
-            self.send_slack_alert(f"GPU {self.gpu_no}: Caption generation started.")
-            for image_batch in tqdm(image_batches, desc=f"Loading images and generating captions on GPU {self.gpu_no}"):
+            # self.send_slack_alert(f"GPU {self.gpu_no}: Caption generation started.")
+            for batch_index, image_batch in enumerate(tqdm(image_batches, desc=f"Loading images and generating captions on GPU {self.gpu_no}")):
                 image_batch_tuples = self.process_images(image_batch)
                 first_image_path = image_batch_tuples[0][1]
                 first_image_caption_path = first_image_path.replace("original", "caption").rsplit(".", 1)[0] + ".txt"
                 last_image_path = image_batch_tuples[-1][1]
                 last_image_caption_path = last_image_path.replace("original", "caption").rsplit(".", 1)[0] + ".txt"
                 if os.path.exists(first_image_caption_path) and os.path.exists(last_image_caption_path):
-                    continue 
-                self.generate_captions([image_batch_tuples], total_batches)
+                    continue
+                self.generate_captions([image_batch_tuples], total_batches,batch_index)
             self.send_slack_alert(f"GPU {self.gpu_no}: Caption generation completed successfully.")
         except Exception as e:
             print(f"GPU {self.gpu_no}: Caption generation process has stopped due to an error: {str(e)}")
@@ -116,7 +116,6 @@ if __name__ == "__main__":
     parser.add_argument("--gpu_no", type=int, required=True, help="GPU number to use")
     parser.add_argument("--batch_size", type=int, required=True, help="Batch Size to use")
     args = parser.parse_args()
-
     model_id = "llava-hf/llava-1.5-7b-hf"
     batch_size = args.batch_size
     webhook_url = "https://hooks.slack.com/services/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"
