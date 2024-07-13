@@ -32,7 +32,7 @@ class ImageCaptioner:
         self.gpu_no = gpu_no
         self.csv_file = f'csv/scenes_part_{gpu_no + 1}.csv'
         self.processor = AutoProcessor.from_pretrained(model_id, pad_token="<pad>")
-        self.model = LlavaForConditionalGeneration.from_pretrained(model_id, load_in_4bit=True).to(f"cuda:{gpu_no}")
+        self.model = LlavaForConditionalGeneration.from_pretrained(model_id, load_in_4bit=True)
         self.image_paths = []
         if os.path.exists(self.csv_file):
             with open(self.csv_file, 'r') as file:
