@@ -1,0 +1,18 @@
+1. Create environment with python=3.10. Set python and pip path correctly, which python and which pip should show correct path.
+  a. export PATH=~/miniconda3/envs/your_env_name/bin:$PATH
+  b. source ~/.bashrc
+2. Installing condatoolkit: 
+  a. condatoolkit 11.3- conda install conda-forge::cudatoolkit=11.3.1
+  b. conda install conda-forge::cudnn=8.1.0.77
+3. Set the path again as in step 1 and do this:
+  a. export LD_LIBRARY_PATH=~/miniconda3/envs/your_env_name/lib:$LD_LIBRARY_PATH
+  b. source ~/.bashrc
+4. Install compatible PyTorch 1.11 and torchvision:
+  a. pip install torch==1.11.0+cu113 -f https://download.pytorch.org/whl/torch_stable.html
+  b. pip install torchvision==0.12.0+cu113 --extra-index-url https://download.pytorch.org/whl/cu113
+5. Install mmcv,mmdet:
+  a. pip install mmcv==2.0.0 -f https://download.openmmlab.com/mmcv/dist/cu113/torch1.11/index.html
+  b. pip install openmim, mim install mmcv==3.0.0
+6. Install yoloworld:
+  a. pip install -e .
+  
