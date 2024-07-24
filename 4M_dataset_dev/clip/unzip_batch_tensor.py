@@ -2,6 +2,7 @@ import glob
 import torch
 import ast
 import os
+import re
 import numpy as np
 from tqdm import tqdm
 from multiprocessing import Pool
@@ -29,10 +30,13 @@ def process_slice(args):
 
 def process_batch(batch_tensor, batch_paths):
     tensor = torch.load(batch_tensor)
+    print(batch_tensor)
+    print(batch_paths.split(":")[0])
     path_string = batch_paths.split(":")[-1].strip()
     file_paths_list = ast.literal_eval(path_string)
 
     tasks = []
+    
     for i in range(tensor.shape[0]):
         output_path = file_paths_list[i].replace('data', 'clip').replace('.jpg', '')
         output_dir = os.path.dirname(output_path)
@@ -42,10 +46,14 @@ def process_batch(batch_tensor, batch_paths):
     with Pool() as pool:
         list(tqdm(pool.imap_unordered(process_slice, tasks), total=len(tasks)))
 
-batch_tensor_paths = glob.glob("/mnt/SSD1/Niantic/clip_feat/*.pt")
+def sort_key(path):
+    match = re.search(r'batch_(\d+)\.pt', path)
+    return int(match.group(1)) if match else float('inf')
+
+batch_tensor_paths = sorted(glob.glob("/mnt/SSD1/Niantic/clip_feat/*.pt"), key=sort_key)
 
 with open("/mnt/SSD1/Niantic/clip_feat/batch_paths.txt", "r") as file:
     batch_paths = file.readlines()
 
-for i, batch_tensor in enumerate(tqdm(batch_tensor_paths)):
-    process_batch(batch_tensor, batch_paths[i])
+for batch_tensor in tqdm(batch_tensor_paths):
+    process_batch(batch_tensor, batch_paths[int(batch_tensor.split("batch_")[-1].split(".pt")[0])])
