@@ -18,7 +18,7 @@ global start_time, csv_no
 start_time = time.time()
 
 def send_slack_alert(webhook_url, message, csv_no):
-    msg = f'GPU_{csv_no:}' + message
+    msg = f'GPU_{csv_no}: ' + message
     if webhook_url:
         try:
             payload = {'text': msg}
@@ -54,7 +54,7 @@ def save_masks_to_file(args):
 def process_image(image_path, resize_transform, device):
     try:
         img = cv2.imread(image_path)
-        with open(image_path.replace('.jpg', '.txt').replace('data', 'bbox'), 'r') as file:
+        with open(image_path.replace('.jpg', '.txt').replace('original', 'bbox'), 'r') as file:
             data = file.read()
 
         lines = data.strip().split('\n')[3:]
@@ -115,7 +115,7 @@ def save_batch_results(batched_output, batched_labels, labels_name, image_paths)
             masks = batched_output[i]['masks']
             iou_score = batched_output[i]['iou_predictions'].view(-1).tolist()
             labels = labels_name[i]
-            txt_filename = image_path.replace("data", "sam").replace('.jpg', '.txt')
+            txt_filename = image_path.replace("original", "sam").replace('.jpg', '.txt')
             if not os.path.exists(txt_filename):
                 text_path = os.path.dirname(txt_filename)
                 os.makedirs(text_path, exist_ok=True)
@@ -146,13 +146,13 @@ def main(csv_file, webhook_url):
         for folder in folders:
             images.extend(glob.glob(os.path.join(folder, '**', '*.jpg')))
             
-        batch_size = 4
+        batch_size = 9
         total_batches = len(images) // batch_size + (1 if len(images) % batch_size > 0 else 0)
         
         for batch_start in tqdm(range(0, len(images), batch_size), desc="Processing batches"):
             batch_images = images[batch_start:batch_start + batch_size]
-            first_save_path = batch_images[0].replace("data", "sam").replace('.jpg', '.txt')
-            last_save_path = batch_images[-1].replace("data", "sam").replace('.jpg', '.txt')
+            first_save_path = batch_images[0].replace("original", "sam").replace('.jpg', '.txt')
+            last_save_path = batch_images[-1].replace("original", "sam").replace('.jpg', '.txt')
             if os.path.exists(first_save_path) and os.path.exists(last_save_path):
                 continue
 
@@ -163,9 +163,9 @@ def main(csv_file, webhook_url):
             save_batch_results(batched_output, batched_labels, labels_name, batch_images)
 
             elapsed_time = time.time() - start_time
-            if elapsed_time >= 60:  
+            if elapsed_time >= 900:  
                 percentage_complete = (batch_start + batch_size) / len(images) * 100
-                send_slack_alert(webhook_url, f"Processing progress: {percentage_complete:.2f}%", csv_no)
+                send_slack_alert(webhook_url, f"Processed batch {batch_start} of {len(images)//batch_size}: {percentage_complete:.2f}%", csv_no)
                 start_time = time.time() 
 
         print("Processing completed.")
@@ -179,4 +179,5 @@ if __name__ == "__main__":
     parser.add_argument('csv_file', type=str)
     args = parser.parse_args()
     webhook_url = "https://hooks.slack.com/services/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" 
+    send_slack_alert(webhook_url, f"SAM generation started", args.csv_file)
     main(args.csv_file, webhook_url)
