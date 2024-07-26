@@ -2,10 +2,10 @@ import glob
 import csv
 import os
 
-train_scenes = glob.glob("/mnt/SSD1/Niantic/data/train/**")
-val_scenes = glob.glob("/mnt/SSD1/Niantic/data/train/val/*")
+train_scenes = glob.glob("/home/ubuntu/MapFree/data/original/train/**")
+val_scenes = glob.glob("/home/ubuntu/MapFree/data/original/val/*")
 scenes = train_scenes + val_scenes
-num_csv = 8
+num_csv = 4
 scenes_per_csv = len(scenes) // num_csv
 
 output_dir = "csv"
@@ -22,5 +22,6 @@ for i in range(num_csv):
     
     with open(csv_filename, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
+        writer.writerow(['scene'])
         for scene in scenes[start_index:end_index]:
             writer.writerow([scene])
