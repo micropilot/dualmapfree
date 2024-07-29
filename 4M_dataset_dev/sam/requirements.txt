@@ -3,3 +3,6 @@ torchvision
 pandas
 requests
 tqdm
+opencv-python
+##pip install git+https://github.com/facebookresearch/segment-anything.git
+## wget 
