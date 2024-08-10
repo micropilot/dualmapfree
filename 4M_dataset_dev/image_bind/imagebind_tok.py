@@ -13,20 +13,12 @@ from torchvision.transforms import Normalize
 from pathlib import Path
 import torch.nn as nn
 
-class ChannelReducer(nn.Module):
-    def __init__(self):
-        super(ChannelReducer, self).__init__()
-        self.conv = nn.Conv2d(in_channels=1280, out_channels=768, kernel_size=1)
-
-    def forward(self, x):
-        return self.conv(x)
-channel_reducer = ChannelReducer().cuda()
 
 transform = transforms.ToTensor()
 resize = transforms.Resize((224, 224))
 
 images = glob.glob("/mnt/SSD1/Niantic/imagebind/train/**/**/*.jpg")
-tok = VQVAE.from_pretrained('EPFL-VILAB/4M_tokenizers_DINOv2-B14_8k_224-448').cuda()
+tok = VQVAE.from_pretrained('EPFL-VILAB/4M_tokenizers_ImageBind-H14_8k_224-448').cuda()
 normalize = Normalize(mean=IMAGENET_INCEPTION_MEAN[0], std=IMAGENET_INCEPTION_STD[0])
 output_dir = "/mnt/SSD1/Niantic/imagebind_tok/train/"
 os.makedirs(output_dir, exist_ok=True)
@@ -63,7 +55,7 @@ for i in tqdm(range(0, len(images), batch_size)):
     for image_path in batch_images:
         rgb_b3hw = reconstruct_tensor(image_path).to(dtype=torch.float32).cuda()  
         tensor_b3hw = rgb_b3hw[1:].view(1, 1280, 16, 16)
-        tensors_b3hw.append(channel_reducer(tensor_b3hw)) 
+        tensors_b3hw.append(tensor_b3hw) 
         base_name = os.path.basename(image_path).split(".jpg")[0]
         dir_name = os.path.dirname(image_path)  
         parts = dir_name.split(os.path.sep)
