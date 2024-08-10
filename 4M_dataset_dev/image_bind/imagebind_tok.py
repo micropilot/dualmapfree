@@ -76,7 +76,7 @@ for i in tqdm(range(0, len(images), batch_size)):
     _, _, tokens = tok.encode(normalize(stacked_tensors_b3hw).cuda())
     
     for i, file in enumerate(token_fname):
-        tokens_np = tokens[i].reshape(1, 196).cpu().numpy()
+        tokens_np = tokens[i].reshape(1, 256).cpu().numpy()
         if file_count >= 10000:
             part_index += 1
             current_part_dir = os.path.join(output_dir, f"part_{part_index}")
