@@ -31,10 +31,10 @@ for i in tqdm(range(0, len(images), batch_size)):
     tensors_b3hw = []
     token_fname = []
     for image_path in batch_images:
-        image = Image.open(image_path).convert('RGB')
+        image = Image.open(image_path)
         rgb_b3hw = transform(resize(image)).unsqueeze(0)
         tensors_b3hw.append(rgb_b3hw)
-        base_name = os.path.basename(image_path).split(".jpg")[0]
+        base_name = os.path.basename(image_path).split(".png")[0]
         dir_name = os.path.dirname(image_path)  
         parts = dir_name.split(os.path.sep)
         prefix = parts[-2] 
@@ -46,7 +46,7 @@ for i in tqdm(range(0, len(images), batch_size)):
     squeezed_tensor = torch.squeeze(stacked_tensors_b3hw, dim=1)
     _, _, tokens = tok.encode(squeezed_tensor.cuda())    
     for i, file in enumerate(token_fname):
-        tokens_np = tokens[i].reshape(1, 14).cpu().numpy()
+        tokens_np = tokens[i].reshape(1, 196).cpu().numpy()
         if file_count >= 10000:
             part_index += 1
             current_part_dir = os.path.join(output_dir, f"part_{part_index}")
