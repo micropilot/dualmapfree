@@ -21,7 +21,7 @@ resize = transforms.Resize((224, 224))
 images = glob.glob("/mnt/SSD1/Niantic/data/train/**/**/*.jpg")
 tok = VQVAE.from_pretrained('EPFL-VILAB/4M_tokenizers_sam-instance_1k_64').cuda()
 normalize = Normalize(mean=IMAGENET_INCEPTION_MEAN, std=IMAGENET_INCEPTION_STD)
-output_dir = "/mnt/SSD1/Niantic/sam/train/"
+output_dir = "/mnt/SSD1/Niantic/sam_token/train/"
 os.makedirs(output_dir, exist_ok=True)
 batch_size = 52
 
