@@ -58,9 +58,9 @@ for i in tqdm(range(0, len(captions_path), batch_size)):
     for caption_path in batch_captions:
         bboxes, base_name = process_bboxes(caption_path)
         if bboxes:
-            all_bboxes.extend(str(bboxes))
+            all_bboxes.append(str(bboxes))
         else:
-            all_bboxes.extend(str([]))
+            all_bboxes.append(str([]))
         base_name = os.path.basename(caption_path).split(".txt")[0]
         dir_name = os.path.dirname(caption_path)  
         parts = dir_name.split(os.path.sep)
@@ -70,9 +70,10 @@ for i in tqdm(range(0, len(captions_path), batch_size)):
         token_fname.append(new_filename)
     
     encoding = tokenizer.encode_batch(all_bboxes)
+
     for i, file in enumerate(token_fname):
         tokens_np = torch.tensor(encoding[i].ids).cpu().numpy()
-        
+
         if file_count >= 10000:
             part_index += 1
             current_part_dir = os.path.join(output_dir, f"part_{part_index}")
