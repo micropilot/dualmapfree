@@ -307,6 +307,14 @@ class MicKeyTrainingModel(pl.LightningModule):
         for key in dinov2_keys:
             del checkpoint['state_dict'][key]
 
+        # Fourm weights
+        fourm_keys = []
+        for key in checkpoint['state_dict'].keys():
+            if 'fourm' in key:
+                fourm_keys.append(key)
+        for key in fourm_keys:
+            del checkpoint['state_dict'][key]
+
     def on_load_checkpoint(self, checkpoint):
 
         # Recover DINOv2 features from pretrained weights.
@@ -315,7 +323,11 @@ class MicKeyTrainingModel(pl.LightningModule):
                 checkpoint['state_dict']['compute_matches.'+param_tensor] = \
                     self.compute_matches.state_dict()[param_tensor]
 
-
+        # Recover fourm features
+        for param_tensor in self.compute_matches.state_dict():
+            if 'fourm'in param_tensor:
+                checkpoint['state_dict']['compute_matches.'+param_tensor] = \
+                    self.compute_matches.state_dict()[param_tensor]
 
     def ground_depth(self, paths, patch_size=14):
         batch_outputs = []

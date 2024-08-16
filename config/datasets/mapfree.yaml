@@ -1,6 +1,6 @@
 DATASET:
   DATA_SOURCE: 'MapFree'
-  DATA_ROOT: '/home/ubuntu/MapFree/data/original/'
+  DATA_ROOT: '/home/ubuntu/MapFree/data/demo/'
   SCENES: None  # should be a list [] or None. If none, use all scenes.
   AUGMENTATION_TYPE: None
   HEIGHT: 720

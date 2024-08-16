@@ -1,5 +1,5 @@
 MODEL: 'MicKey'
-DEBUG: True
+DEBUG: False
 MICKEY:
   DINOV2:
     DOWN_FACTOR: 14
@@ -33,7 +33,7 @@ FEATURE_MATCHER:
 
 TRAINING:
   NUM_GPUS: 2
-  BATCH_SIZE: 2 # BS for each dataloader (in every GPU)
+  BATCH_SIZE: 32 # BS for each dataloader (in every GPU)
   NUM_WORKERS: 12
   SAMPLER: 'scene_balance'
   N_SAMPLES_SCENE: 100
