@@ -31,14 +31,14 @@ torch.backends.cuda.matmul.allow_tf32 = True
 # The flag below controls whether to allow TF32 on cuDNN. This flag defaults to True.
 torch.backends.cudnn.allow_tf32 = True
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = 'cuda'
 torch.set_grad_enabled(False)
 
 class FourmDinov2(nn.Module):
     def __init__(self, model_size='XL'):
         super(FourmDinov2, self).__init__()
         
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = 'cpu'
         tokenizer_path = os.getcwd() + "/lib/models/MicKey/modules/ml_fourm/fourm/utils/tokenizer/trained/text_tokenizer_4m_wordpiece_30k.json"
         self.text_tok = Tokenizer.from_file(tokenizer_path)
         self.toks = {
@@ -87,6 +87,7 @@ class FourmDinov2(nn.Module):
         return transformed_images
 
     def forward(self, img, batch_size):
+        self.device = 'cuda'
         img_process = self.preprocess_image(img)
         batched_sample = {
             'rgb@224': {
@@ -107,6 +108,7 @@ class FourmDinov2(nn.Module):
             verbose=True, seed=0,
             top_p=self.top_p, top_k=self.top_k,
         )
+
         dec_dict = decode_dict(
             out_dict, self.toks, self.text_tok, 
             image_size=224, patch_size=14,
