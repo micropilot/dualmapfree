@@ -56,7 +56,7 @@ class MicKey_Extractor(nn.Module):
     def forward(self, x):
         if self.cfg.VARIANTS.FOURM_FROZEN:
             with torch.no_grad():
-                dinov2_features = self.fourm(x,self.cfg.TRAINING.BATCH_SIZE)['tok_dinov2@224']
+                dinov2_features = self.fourm(x,x.shape[0])['tok_dinov2@224']
         
         elif self.cfg.DATASET.DATA_SOURCE == 'MapFree':
             B, C, H, W = x.shape
